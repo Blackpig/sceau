@@ -10,6 +10,7 @@ use BlackpigCreatif\Sceau\Enums\TwitterCardType;
 use BlackpigCreatif\Sceau\Services\JsonLdGenerator;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -321,7 +322,7 @@ class SeoDataForm
                     ->description('Generate FAQPage schema markup for Google Search rich snippets and voice search.')
                     ->columnSpan('full')
                     ->schema([
-                        \Filament\Schemas\Components\Placeholder::make('faq_warning')
+                        Placeholder::make('faq_warning')
                             ->label('')
                             ->content(new \Illuminate\Support\HtmlString('
                                 <div class="rounded-lg bg-warning-50 dark:bg-warning-900/20 p-4 text-sm">
