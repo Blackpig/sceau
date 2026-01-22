@@ -38,6 +38,7 @@ class SeoDataForm
                         self::twitterCardTab(),
                         self::schemaMarkupTab(),
                         self::aiOptimizationTab(),
+                        self::faqSchemaTab(),
                     ]),
             ]);
     }
@@ -308,28 +309,64 @@ class SeoDataForm
                             ->rows(2)
                             ->helperText('Brief changelog for AI context.'),
                     ]),
+            ]);
+    }
 
-                Section::make('FAQ Schema')
-                    ->description('Question/Answer pairs for voice search and AI responses')
+    protected static function faqSchemaTab(): Tabs\Tab
+    {
+        return Tabs\Tab::make('FAQ Schema')
+            ->icon(Heroicon::OutlinedQuestionMarkCircle)
+            ->schema([
+                Section::make('FAQ Schema for Rich Snippets')
+                    ->description('Generate FAQPage schema markup for Google Search rich snippets and voice search.')
                     ->columnSpan('full')
                     ->schema([
+                        \Filament\Schemas\Components\Placeholder::make('faq_warning')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="rounded-lg bg-warning-50 dark:bg-warning-900/20 p-4 text-sm">
+                                    <div class="flex gap-3">
+                                        <svg class="w-5 h-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <div class="space-y-2">
+                                            <p class="font-semibold text-warning-800 dark:text-warning-200">
+                                                ⚠️ Only add FAQs here if:
+                                            </p>
+                                            <ul class="list-disc list-inside space-y-1 text-warning-700 dark:text-warning-300 ml-2">
+                                                <li><strong>No FAQ blocks exist on this page</strong> - Avoid duplicate FAQPage schemas</li>
+                                                <li><strong>Questions are genuine</strong> - Answer real customer questions</li>
+                                                <li><strong>Answers add value</strong> - Provide helpful, accurate information</li>
+                                                <li><strong>Content is relevant</strong> - FAQs must relate to this specific page topic</li>
+                                            </ul>
+                                            <p class="text-warning-700 dark:text-warning-300 mt-2 italic">
+                                                This feature is optional. Leave empty if you don\'t have relevant FAQs.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            '))
+                            ->columnSpanFull(),
+
                         Repeater::make('faq_pairs')
                             ->label('FAQ Pairs')
                             ->collapsible()
                             ->collapsed()
                             ->itemLabel(fn (array $state): ?string => $state['question'] ?? 'New FAQ')
                             ->addActionLabel('Add FAQ')
-                            ->helperText('These generate FAQPage schema markup for rich snippets.')
+                            ->helperText('These generate FAQPage schema markup that appears in Google Search rich snippets.')
                             ->schema([
                                 TextInput::make('question')
                                     ->label('Question')
                                     ->required()
-                                    ->maxLength(255),
+                                    ->maxLength(255)
+                                    ->placeholder('e.g., Is sterling silver hypoallergenic?'),
 
                                 Textarea::make('answer')
                                     ->label('Answer')
                                     ->required()
-                                    ->rows(3),
+                                    ->rows(3)
+                                    ->placeholder('Provide a clear, helpful answer...'),
                             ])
                             ->columns(1),
                     ]),
