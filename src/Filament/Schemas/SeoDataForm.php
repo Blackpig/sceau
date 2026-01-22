@@ -10,12 +10,12 @@ use BlackpigCreatif\Sceau\Enums\TwitterCardType;
 use BlackpigCreatif\Sceau\Services\JsonLdGenerator;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
@@ -322,9 +322,9 @@ class SeoDataForm
                     ->description('Generate FAQPage schema markup for Google Search rich snippets and voice search.')
                     ->columnSpan('full')
                     ->schema([
-                        Placeholder::make('faq_warning')
+                        TextEntry::make('faq_warning')
                             ->label('')
-                            ->content(new \Illuminate\Support\HtmlString('
+                            ->state(new \Illuminate\Support\HtmlString('
                                 <div class="rounded-lg bg-warning-50 dark:bg-warning-900/20 p-4 text-sm">
                                     <div class="flex gap-3">
                                         <svg class="w-5 h-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
