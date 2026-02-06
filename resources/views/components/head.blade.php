@@ -17,6 +17,13 @@
         <link rel="canonical" href="{{ $seoData->canonical_url }}">
     @endif
 
+    {{-- Hreflang Tags for Multi-locale Sites --}}
+    @if(count($hreflangTags) > 0)
+        @foreach($hreflangTags as $tag)
+            <link rel="alternate" hreflang="{{ $tag['hreflang'] }}" href="{{ $tag['href'] }}">
+        @endforeach
+    @endif
+
     @if($seoData->robots_directive)
         <meta name="robots" content="{{ $seoData->robots_directive }}">
     @endif
@@ -42,12 +49,12 @@
         <meta property="og:url" content="{{ $seoData->canonical_url }}">
     @endif
 
-    @if($siteName = $seoData->open_graph['site_name'] ?? null)
-        <meta property="og:site_name" content="{{ $siteName }}">
+    @if($seoData->og_site_name)
+        <meta property="og:site_name" content="{{ $seoData->og_site_name }}">
     @endif
 
-    @if($locale = $seoData->open_graph['locale'] ?? null)
-        <meta property="og:locale" content="{{ $locale }}">
+    @if($seoData->og_locale)
+        <meta property="og:locale" content="{{ $seoData->og_locale }}">
     @endif
 
     {{-- Twitter Card Tags --}}
@@ -67,12 +74,12 @@
         <meta name="twitter:image" content="{{ $seoData->getTwitterImage() }}">
     @endif
 
-    @if($site = $seoData->twitter_card['site'] ?? null)
-        <meta name="twitter:site" content="@{{ ltrim($site, '@') }}">
+    @if($seoData->twitter_site)
+        <meta name="twitter:site" content="@{{ ltrim($seoData->twitter_site, '@') }}">
     @endif
 
-    @if($creator = $seoData->twitter_card['creator'] ?? null)
-        <meta name="twitter:creator" content="@{{ ltrim($creator, '@') }}">
+    @if($seoData->twitter_creator)
+        <meta name="twitter:creator" content="@{{ ltrim($seoData->twitter_creator, '@') }}">
     @endif
 
     {{-- JSON-LD Structured Data --}}

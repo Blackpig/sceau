@@ -32,7 +32,7 @@ abstract class BaseSchema
      */
     protected function getName(SeoData $seoData): string
     {
-        return $seoData->open_graph['site_name'] ?? config('app.name');
+        return $seoData->og_site_name ?? config('app.name');
     }
 
     /**
@@ -45,10 +45,13 @@ abstract class BaseSchema
 
     /**
      * Get description from SEO data.
+     * Uses current locale for translated fields.
      */
     protected function getDescription(SeoData $seoData): ?string
     {
-        return $seoData->description;
+        $locale = app()->getLocale();
+
+        return $seoData->getTranslation('description', $locale, false);
     }
 
     /**

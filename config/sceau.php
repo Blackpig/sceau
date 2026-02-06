@@ -21,7 +21,26 @@ return [
     | Character Limits
     |--------------------------------------------------------------------------
     |
-    | Configure the optimal and maximum character limits for SEO fields.
+    | Configure character limits for SEO fields to guide content optimization.
+    | These limits are used in form validation and helper text.
+    |
+    */
+
+    'character_limits' => [
+        'meta_title' => 70,
+        'meta_description' => 160,
+        'og_title' => 95,
+        'og_description' => 200,
+        'twitter_title' => 70,
+        'twitter_description' => 200,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Legacy Limits Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Legacy format for backwards compatibility.
     |
     */
 

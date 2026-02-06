@@ -13,14 +13,22 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use LaraZeus\SpatieTranslatable\Resources\RelationManagers\Concerns\Translatable;
 
 class SeoDataRelationManager extends RelationManager
 {
+    use Translatable;
+
     protected static string $relationship = 'seoData';
 
     protected static ?string $title = 'SEO';
 
     protected static string|BackedEnum|null $icon = Heroicon::OutlinedMagnifyingGlass;
+
+    public static function getTranslatableLocales(): array
+    {
+        return array_values(config('app.available_locales', ['en']));
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -44,7 +52,7 @@ class SeoDataRelationManager extends RelationManager
                 IconColumn::make('has_og')
                     ->label('OG')
                     ->boolean()
-                    ->getStateUsing(fn ($record): bool => ! empty($record->open_graph)),
+                    ->getStateUsing(fn ($record): bool => ! empty($record->og_title) || ! empty($record->og_image)),
 
                 IconColumn::make('has_schema')
                     ->label('Schema')
@@ -61,6 +69,8 @@ class SeoDataRelationManager extends RelationManager
                     ->label('Add SEO Data')
                     ->icon(Heroicon::OutlinedPlus)
                     ->visible(fn (): bool => $this->getOwnerRecord()->seoData === null),
+                
+                    \LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher::make()
             ])
             ->actions([
                 EditAction::make(),

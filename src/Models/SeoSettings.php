@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SeoSettings extends Model
 {
-    protected $table = 'seo_settings';
+    protected $table = 'sceau_seo_settings';
 
     protected $fillable = [
         'site_name',

@@ -37,11 +37,6 @@ class JsonLdGenerator
             $schemas[] = $schemaFromType;
         }
 
-        // Add FAQ schema if FAQ pairs exist
-        if ($seoData->hasFaqPairs()) {
-            $schemas[] = $this->getGenerator(SchemaType::FAQPage)->generate($seoData);
-        }
-
         if (empty($schemas)) {
             return null;
         }
@@ -63,10 +58,15 @@ class JsonLdGenerator
 
         // If custom schema_data is provided, merge it with base schema
         if (! empty($seoData->schema_data)) {
+            // Defensive: Ensure schema_data is an array
+            $customData = is_array($seoData->schema_data)
+                ? $seoData->schema_data
+                : json_decode($seoData->schema_data, true);
+
             return array_merge([
                 '@context' => 'https://schema.org',
                 '@type' => $seoData->schema_type->value,
-            ], $seoData->schema_data);
+            ], $customData ?? []);
         }
 
         // Use registered generator

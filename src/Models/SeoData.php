@@ -3,13 +3,28 @@
 namespace BlackpigCreatif\Sceau\Models;
 
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
+use BlackpigCreatif\ChambreNoir\StateCasts\RetouchMediaUploadStateCast;
 use BlackpigCreatif\Sceau\Enums\SchemaType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Spatie\Translatable\HasTranslations;
 
 class SeoData extends Model
 {
-    protected $table = 'seo_data';
+    use HasTranslations;
+
+    protected $table = 'sceau_seo_data';
+
+    public array $translatable = [
+        'title',
+        'description',
+        'focus_keyword',
+        'og_title',
+        'og_description',
+        'twitter_title',
+        'twitter_description',
+        'schema_data',
+    ];
 
     protected $fillable = [
         'seoable_type',
@@ -20,26 +35,34 @@ class SeoData extends Model
         'robots_directive',
         'focus_keyword',
         'og_use_hero_image',
-        'open_graph',
-        'twitter_use_hero_image',
-        'twitter_card',
+        'og_title',
+        'og_description',
+        'og_image',
+        'og_type',
+        'og_site_name',
+        'og_locale',
+        'twitter_title',
+        'twitter_description',
+        'twitter_card_type',
+        'twitter_site',
+        'twitter_creator',
         'schema_type',
         'schema_data',
         'content_updated_at',
         'update_notes',
-        'faq_pairs',
     ];
 
     protected function casts(): array
     {
         return [
             'og_use_hero_image' => 'boolean',
-            'open_graph' => 'array',
-            'twitter_use_hero_image' => 'boolean',
-            'twitter_card' => 'array',
+            'og_title' => 'array',
+            'og_description' => 'array',
+            'og_image' => 'array',
+            'twitter_title' => 'array',
+            'twitter_description' => 'array',
             'schema_type' => SchemaType::class,
             'schema_data' => 'array',
-            'faq_pairs' => 'array',
             'content_updated_at' => 'datetime',
         ];
     }
@@ -49,16 +72,33 @@ class SeoData extends Model
         return $this->morphTo();
     }
 
+    /**
+     * Get OG title with fallback to meta title
+     */
     public function getOgTitle(): ?string
     {
-        return $this->open_graph['title'] ?? $this->title;
+        $locale = app()->getLocale();
+        $ogTitle = $this->getTranslation('og_title', $locale, true);
+        $title = $this->getTranslation('title', $locale, true);
+
+        return $ogTitle ?? $title;
     }
 
+    /**
+     * Get OG description with fallback to meta description
+     */
     public function getOgDescription(): ?string
     {
-        return $this->open_graph['description'] ?? $this->description;
+        $locale = app()->getLocale();
+        $ogDescription = $this->getTranslation('og_description', $locale, true);
+        $description = $this->getTranslation('description', $locale, true);
+
+        return $ogDescription ?? $description;
     }
 
+    /**
+     * Get OG image
+     */
     public function getOgImage(): ?string
     {
         // If "use hero image" toggle is on, try to get hero block image
@@ -70,53 +110,67 @@ class SeoData extends Model
         }
 
         // Fall back to uploaded OG image
-        return $this->resolveRetouchMediaUrl($this->open_graph['image'] ?? null, 'og');
+        return $this->resolveRetouchMediaUrl($this->og_image, 'og');
     }
 
+    /**
+     * Get OG type
+     */
     public function getOgType(): string
     {
-        return $this->open_graph['type'] ?? 'website';
+        return $this->og_type ?? 'website';
     }
 
+    /**
+     * Get Twitter title with fallback to OG title
+     */
     public function getTwitterTitle(): ?string
     {
-        return $this->twitter_card['title'] ?? $this->getOgTitle();
+        $locale = app()->getLocale();
+        $twitterTitle = $this->getTranslation('twitter_title', $locale, true);
+
+        return $twitterTitle ?? $this->getOgTitle();
     }
 
+    /**
+     * Get Twitter description with fallback to OG description
+     */
     public function getTwitterDescription(): ?string
     {
-        return $this->twitter_card['description'] ?? $this->getOgDescription();
+        $locale = app()->getLocale();
+        $twitterDescription = $this->getTranslation('twitter_description', $locale, true);
+
+        return $twitterDescription ?? $this->getOgDescription();
     }
 
+    /**
+     * Get Twitter image (uses OG image with Twitter conversion)
+     */
     public function getTwitterImage(): ?string
     {
         // If "use hero image" toggle is on, try to get hero block image
-        if ($this->twitter_use_hero_image) {
+        if ($this->og_use_hero_image) {
             $heroImage = $this->resolveHeroImage('twitter');
             if ($heroImage) {
                 return $heroImage;
             }
         }
 
-        // Fall back to uploaded Twitter image, then OG image
-        $twitterImage = $this->resolveRetouchMediaUrl($this->twitter_card['image'] ?? null, 'twitter');
-
-        return $twitterImage ?? $this->getOgImage();
+        // Use the social image with Twitter conversion
+        return $this->resolveRetouchMediaUrl($this->og_image, 'twitter');
     }
 
+    /**
+     * Get Twitter card type
+     */
     public function getTwitterCardType(): string
     {
-        return $this->twitter_card['card_type'] ?? 'summary_large_image';
+        return $this->twitter_card_type ?? 'summary_large_image';
     }
 
     public function hasSchemaMarkup(): bool
     {
         return $this->schema_type !== null && ! empty($this->schema_data);
-    }
-
-    public function hasFaqPairs(): bool
-    {
-        return ! empty($this->faq_pairs);
     }
 
     /**

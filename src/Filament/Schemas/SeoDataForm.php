@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Sceau\Filament\Schemas;
 
+use BlackpigCreatif\ChambreNoir\Conversions\SocialImageConversion;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use BlackpigCreatif\Sceau\Enums\OgType;
 use BlackpigCreatif\Sceau\Enums\RobotsDirective;
@@ -39,7 +40,6 @@ class SeoDataForm
                         self::twitterCardTab(),
                         self::schemaMarkupTab(),
                         self::aiOptimizationTab(),
-                        self::faqSchemaTab(),
                     ]),
             ]);
     }
@@ -57,35 +57,35 @@ class SeoDataForm
                         TextInput::make('title')
                             ->label('Meta Title')
                             ->placeholder('Page title for search results')
-                            ->maxLength(70)
-                            ->hint(fn (?string $state): string => (strlen($state ?? '').' / 70 characters'))
+                            ->maxLength(config('sceau.character_limits.meta_title', 70))
+                            ->hint(fn (?string $state): string => (strlen($state ?? '').' / '.config('sceau.character_limits.meta_title', 70).' characters'))
                             ->hintColor(fn (?string $state): string => match (true) {
                                 $state === null => 'gray',
                                 strlen($state) >= 50 && strlen($state) <= 65 => 'success',
-                                strlen($state) > 70 => 'danger',
+                                strlen($state) > config('sceau.character_limits.meta_title', 70) => 'danger',
                                 default => 'warning',
                             })
-                            ->helperText('Optimal: 50-65 characters. Maximum: 70 characters.'),
+                            ->helperText('Optimal: 50-65 characters. Maximum: '.config('sceau.character_limits.meta_title', 70).' characters.'),
 
                         Textarea::make('description')
                             ->label('Meta Description')
                             ->placeholder('Brief description for search results')
                             ->rows(3)
-                            ->maxLength(160)
-                            ->hint(fn (?string $state): string => (strlen($state ?? '').' / 160 characters'))
+                            ->maxLength(config('sceau.character_limits.meta_description', 160))
+                            ->hint(fn (?string $state): string => (strlen($state ?? '').' / '.config('sceau.character_limits.meta_description', 160).' characters'))
                             ->hintColor(fn (?string $state): string => match (true) {
                                 $state === null => 'gray',
-                                strlen($state) >= 150 && strlen($state) <= 160 => 'success',
-                                strlen($state) > 160 => 'danger',
+                                strlen($state) >= 150 && strlen($state) <= config('sceau.character_limits.meta_description', 160) => 'success',
+                                strlen($state) > config('sceau.character_limits.meta_description', 160) => 'danger',
                                 default => 'warning',
                             })
-                            ->helperText('Optimal: 150-160 characters. Google may rewrite descriptions.'),
+                            ->helperText('Optimal: 150-'.config('sceau.character_limits.meta_description', 160).' characters. Google may rewrite descriptions.'),
 
                         TextInput::make('focus_keyword')
                             ->label('Focus Keyword')
                             ->placeholder('Primary keyword to target')
                             ->maxLength(100)
-                            ->helperText('The main keyword this content should rank for.'),
+                            ->helperText('Comma-separated keywords for this locale.'),
 
                         TextInput::make('canonical_url')
                             ->label('Canonical URL')
@@ -112,54 +112,47 @@ class SeoDataForm
                     ->columnSpan('full')
                     ->columns(1)
                     ->schema([
-                        TextInput::make('open_graph.title')
+                        TextInput::make('og_title')
                             ->label('OG Title')
                             ->placeholder('Leave empty to use Meta Title')
-                            ->maxLength(95)
+                            ->maxLength(config('sceau.character_limits.og_title', 95))
                             ->helperText('Optimal: 40-60 characters for Facebook.'),
 
-                        Textarea::make('open_graph.description')
+                        Textarea::make('og_description')
                             ->label('OG Description')
                             ->placeholder('Leave empty to use Meta Description')
                             ->rows(2)
-                            ->maxLength(200)
+                            ->maxLength(config('sceau.character_limits.og_description', 200))
                             ->helperText('Optimal: 55-200 characters.'),
 
                         Toggle::make('og_use_hero_image')
                             ->label('Use Hero Image')
-                            ->helperText('Use the hero block image from the page instead of uploading a custom image.')
+                            ->helperText('Use the hero block image from the page for social sharing.')
                             ->live()
                             ->default(false),
 
-                        RetouchMediaUpload::make('open_graph.image')
-                            ->label('OG Image')
-                            ->conversions([
-                                'og' => [
-                                    'width' => 1200,
-                                    'height' => 630,
-                                    'fit' => 'crop',
-                                    'quality' => 90,
-                                ],
-                            ])
+                        RetouchMediaUpload::make('og_image')
+                            ->label('Social Image')
+                            ->preset(SocialImageConversion::class)
                             ->maxFiles(1)
                             ->disk(fn (): string => config('sceau.uploads.disk', 'public'))
                             ->directory(fn (): string => config('sceau.uploads.directory', 'seo-images'))
-                            ->helperText('Recommended: 1200x630 pixels. This image appears in social shares.')
+                            ->helperText('Used for Facebook, Twitter, LinkedIn, etc. Optimal: 1200x630 pixels.')
                             ->visible(fn (Get $get): bool => ! $get('og_use_hero_image'))
                             ->columnSpanFull(),
 
-                        Select::make('open_graph.type')
+                        Select::make('og_type')
                             ->label('OG Type')
                             ->options(OgType::class)
                             ->default(OgType::Website)
                             ->helperText('The type of content being shared.'),
 
-                        TextInput::make('open_graph.site_name')
+                        TextInput::make('og_site_name')
                             ->label('Site Name')
                             ->placeholder(fn (): string => config('app.name'))
                             ->helperText('Your website or brand name.'),
 
-                        TextInput::make('open_graph.locale')
+                        TextInput::make('og_locale')
                             ->label('Locale')
                             ->placeholder('en_US')
                             ->maxLength(10)
@@ -178,56 +171,33 @@ class SeoDataForm
                     ->columnSpan('full')
                     ->columns(1)
                     ->schema([
-                        Select::make('twitter_card.card_type')
+                        Select::make('twitter_card_type')
                             ->label('Card Type')
                             ->options(TwitterCardType::class)
                             ->default(TwitterCardType::SummaryLargeImage)
                             ->helperText('Summary Large Image is recommended for most content.'),
 
-                        TextInput::make('twitter_card.title')
+                        TextInput::make('twitter_title')
                             ->label('Twitter Title')
                             ->placeholder('Leave empty to use OG Title')
-                            ->maxLength(70)
-                            ->helperText('Maximum 70 characters.'),
+                            ->maxLength(config('sceau.character_limits.twitter_title', 70))
+                            ->helperText('Maximum '.config('sceau.character_limits.twitter_title', 70).' characters.'),
 
-                        Textarea::make('twitter_card.description')
+                        Textarea::make('twitter_description')
                             ->label('Twitter Description')
                             ->placeholder('Leave empty to use OG Description')
                             ->rows(2)
-                            ->maxLength(200)
-                            ->helperText('Maximum 200 characters.'),
+                            ->maxLength(config('sceau.character_limits.twitter_description', 200))
+                            ->helperText('Maximum '.config('sceau.character_limits.twitter_description', 200).' characters. Uses the Social Image from Open Graph tab.'),
 
-                        Toggle::make('twitter_use_hero_image')
-                            ->label('Use Hero Image')
-                            ->helperText('Use the hero block image from the page instead of uploading a custom image.')
-                            ->live()
-                            ->default(false),
-
-                        RetouchMediaUpload::make('twitter_card.image')
-                            ->label('Twitter Image')
-                            ->conversions([
-                                'twitter' => [
-                                    'width' => 1200,
-                                    'height' => 600,
-                                    'fit' => 'crop',
-                                    'quality' => 90,
-                                ],
-                            ])
-                            ->maxFiles(1)
-                            ->disk(fn (): string => config('sceau.uploads.disk', 'public'))
-                            ->directory(fn (): string => config('sceau.uploads.directory', 'seo-images'))
-                            ->helperText('Leave empty to use OG Image. Recommended: 1200x600 pixels.')
-                            ->visible(fn (Get $get): bool => ! $get('twitter_use_hero_image'))
-                            ->columnSpanFull(),
-
-                        TextInput::make('twitter_card.site')
+                        TextInput::make('twitter_site')
                             ->label('Twitter Site')
                             ->placeholder('@yourcompany')
                             ->prefix('@')
                             ->maxLength(50)
                             ->helperText('Your company Twitter handle.'),
 
-                        TextInput::make('twitter_card.creator')
+                        TextInput::make('twitter_creator')
                             ->label('Twitter Creator')
                             ->placeholder('@author')
                             ->prefix('@')
@@ -309,67 +279,6 @@ class SeoDataForm
                             ->placeholder('What changed in the last update?')
                             ->rows(2)
                             ->helperText('Brief changelog for AI context.'),
-                    ]),
-            ]);
-    }
-
-    protected static function faqSchemaTab(): Tabs\Tab
-    {
-        return Tabs\Tab::make('FAQ Schema')
-            ->icon(Heroicon::OutlinedQuestionMarkCircle)
-            ->schema([
-                Section::make('FAQ Schema for Rich Snippets')
-                    ->description('Generate FAQPage schema markup for Google Search rich snippets and voice search.')
-                    ->columnSpan('full')
-                    ->schema([
-                        TextEntry::make('faq_warning')
-                            ->label('')
-                            ->state(new \Illuminate\Support\HtmlString('
-                                <div class="rounded-lg bg-warning-50 dark:bg-warning-900/20 p-4 text-sm">
-                                    <div class="flex gap-3">
-                                        <svg class="w-5 h-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                        <div class="space-y-2">
-                                            <p class="font-semibold text-warning-800 dark:text-warning-200">
-                                                ⚠️ Only add FAQs here if:
-                                            </p>
-                                            <ul class="list-disc list-inside space-y-1 text-warning-700 dark:text-warning-300 ml-2">
-                                                <li><strong>No FAQ blocks exist on this page</strong> - Avoid duplicate FAQPage schemas</li>
-                                                <li><strong>Questions are genuine</strong> - Answer real customer questions</li>
-                                                <li><strong>Answers add value</strong> - Provide helpful, accurate information</li>
-                                                <li><strong>Content is relevant</strong> - FAQs must relate to this specific page topic</li>
-                                            </ul>
-                                            <p class="text-warning-700 dark:text-warning-300 mt-2 italic">
-                                                This feature is optional. Leave empty if you don\'t have relevant FAQs.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            '))
-                            ->columnSpanFull(),
-
-                        Repeater::make('faq_pairs')
-                            ->label('FAQ Pairs')
-                            ->collapsible()
-                            ->collapsed()
-                            ->itemLabel(fn (array $state): ?string => $state['question'] ?? 'New FAQ')
-                            ->addActionLabel('Add FAQ')
-                            ->helperText('These generate FAQPage schema markup that appears in Google Search rich snippets.')
-                            ->schema([
-                                TextInput::make('question')
-                                    ->label('Question')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->placeholder('e.g., Is sterling silver hypoallergenic?'),
-
-                                Textarea::make('answer')
-                                    ->label('Answer')
-                                    ->required()
-                                    ->rows(3)
-                                    ->placeholder('Provide a clear, helpful answer...'),
-                            ])
-                            ->columns(1),
                     ]),
             ]);
     }

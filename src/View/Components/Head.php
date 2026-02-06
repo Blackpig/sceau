@@ -17,10 +17,13 @@ class Head extends Component
 
     public ?string $jsonLd = null;
 
+    public array $hreflangTags = [];
+
     public function __construct(public ?Model $model = null)
     {
         $this->seoData = $this->resolveSeoData();
         $this->jsonLd = $this->generateJsonLd();
+        $this->hreflangTags = $this->generateHreflangTags();
     }
 
     protected function resolveSeoData(): ?SeoData
@@ -47,14 +50,6 @@ class Head extends Component
             // Generate schema from schema_type (respects manual schema_data if present)
             if ($schemaFromType = $generator->generateSchemaFromType($this->seoData)) {
                 $schemas[] = $schemaFromType;
-            }
-
-            // Add FAQ schema if FAQ pairs exist in SeoData
-            if ($this->seoData->hasFaqPairs()) {
-                $faqGenerator = $generator->getGenerator(SchemaType::FAQPage);
-                if ($faqGenerator) {
-                    $schemas[] = $faqGenerator->generate($this->seoData);
-                }
             }
         }
 
@@ -126,11 +121,71 @@ class Head extends Component
         return $schema;
     }
 
+    /**
+     * Generate hreflang tags for multi-locale sites.
+     */
+    protected function generateHreflangTags(): array
+    {
+        $availableLocales = config('app.available_locales', []);
+
+        // Only generate if multiple locales exist
+        if (count($availableLocales) <= 1) {
+            return [];
+        }
+
+        $tags = [];
+        $currentUrl = url()->current();
+        $defaultLocale = config('app.locale', 'en');
+
+        // Parse current URL to build locale-specific URLs
+        $baseUrl = config('app.url');
+
+        foreach ($availableLocales as $name => $code) {
+            // Build URL with locale prefix
+            $localeUrl = rtrim($baseUrl, '/') . '/' . $code . $this->getPathWithoutLocale();
+
+            $tags[] = [
+                'hreflang' => $code,
+                'href' => $localeUrl,
+            ];
+        }
+
+        // Add x-default pointing to default locale
+        $tags[] = [
+            'hreflang' => 'x-default',
+            'href' => rtrim($baseUrl, '/') . '/' . $defaultLocale . $this->getPathWithoutLocale(),
+        ];
+
+        return $tags;
+    }
+
+    /**
+     * Get the current path without locale prefix.
+     */
+    protected function getPathWithoutLocale(): string
+    {
+        $path = request()->path();
+
+        // Remove locale prefix if present
+        $availableLocales = config('app.available_locales', []);
+        foreach ($availableLocales as $name => $code) {
+            if (str_starts_with($path, $code . '/')) {
+                return '/' . substr($path, strlen($code) + 1);
+            }
+            if ($path === $code) {
+                return '';
+            }
+        }
+
+        return '/' . $path;
+    }
+
     public function render(): View
     {
         return view('sceau::components.head', [
             'seoData' => $this->seoData,
             'jsonLd' => $this->jsonLd,
+            'hreflangTags' => $this->hreflangTags,
         ]);
     }
 }
