@@ -17,8 +17,8 @@ class SceauServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasMigrations([
-                'create_seo_data_table',
-                'create_seo_settings_table',
+                '2026_02_06_000001_create_seo_data_table',
+                '2026_02_06_000002_create_seo_settings_table',
             ]);
     }
 
