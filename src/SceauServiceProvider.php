@@ -10,22 +10,29 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class SceauServiceProvider extends PackageServiceProvider
 {
+    public function boot()
+    {
+        parent::boot();
+        
+        // Load migrations manually - this is more reliable
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+    }
+    
     public function configurePackage(Package $package): void
     {
         $package
             ->name('sceau')
             ->hasConfigFile()
             ->hasViews()
-            ->hasMigrations([
+            /* ->hasMigrations([
                 '2026_01_01_000001_create_seo_data_table',
                 '2026_01_01_000002_create_seo_settings_table',
-            ]);
+            ]) */;
     }
 
     public function packageRegistered(): void
     {
         // Register SchemaStack as a singleton
-        $this->app->singleton(SchemaStack::class);
     }
 
     public function packageBooted(): void
