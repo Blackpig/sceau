@@ -27,7 +27,9 @@
         "blackpig-creatif/chambre-noir": "^1.0",
         "filament/filament": "^4.0",
         "illuminate/contracts": "^11.0|^12.0",
-        "spatie/laravel-package-tools": "^1.16"
+        "lara-zeus/spatie-translatable": "^1.0",
+        "spatie/laravel-package-tools": "^1.16",
+        "spatie/laravel-translatable": "^6.0"
     },
     "require-dev": {
       "orchestra/testbench": "^9.0",
