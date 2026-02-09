@@ -1,0 +1,67 @@
+{
+    "name": "blackpig-creatif/sceau",
+    "description": "SEO and social media optimization for FilamentPHP v4",
+    "keywords": [
+      "laravel",
+      "filament",
+      "filamentphp",
+      "seo",
+      "meta-tags",
+      "open-graph",
+      "twitter-cards",
+      "social-media",
+      "blackpig-creatif",
+      "sceau"
+    ],
+    "homepage": "https://github.com/blackpig-creatif/sceau",
+    "license": "MIT",
+    "authors": [
+      {
+        "name": "Stuart Hallewell",
+        "email": "stuart@blackpig.eu",
+        "role": "Developer"
+      }
+    ],
+    "require": {
+        "php": "^8.2|^8.3|^8.4",
+        "blackpig-creatif/chambre-noir": "^1.0",
+        "filament/filament": "^4.0",
+        "illuminate/contracts": "^11.0|^12.0",
+        "spatie/laravel-package-tools": "^1.16"
+    },
+    "require-dev": {
+      "orchestra/testbench": "^9.0",
+      "pestphp/pest": "^3.0",
+      "pestphp/pest-plugin-laravel": "^3.0",
+      "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+      "psr-4": {
+        "BlackpigCreatif\\Sceau\\": "src/"
+      }
+    },
+    "autoload-dev": {
+      "psr-4": {
+        "BlackpigCreatif\\Sceau\\Tests\\": "tests/"
+      }
+    },
+    "scripts": {
+      "test": "vendor/bin/pest",
+      "test-coverage": "vendor/bin/pest --coverage"
+    },
+    "config": {
+      "sort-packages": true,
+      "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+      "laravel": {
+        "providers": [
+          "BlackpigCreatif\\Sceau\\SceauServiceProvider"
+        ]
+      }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
