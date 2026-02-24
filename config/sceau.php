@@ -77,12 +77,32 @@ return [
     | Schema Types
     |--------------------------------------------------------------------------
     |
-    | Optionally limit the available schema types. Leave null to allow all.
-    | Example: ['Article', 'BlogPosting', 'Product']
+    | Limit the schema types available in the Filament SEO form.
+    | Set to null to allow all registered types.
+    |
+    | Note: Organization and LocalBusiness are intentionally excluded from the
+    | default list — Sceau adds an Organization schema automatically from your
+    | global SEO Settings, so setting it at the page level is redundant.
+    | FAQPage and VideoObject are also excluded because they are generated
+    | automatically from Atelier blocks (FaqsBlock, VideoBlock) and the
+    | block-derived version is always richer than a manual page-level entry.
+    |
+    | Available values:
+    | Article, BlogPosting, NewsArticle, Product, LocalBusiness, Organization,
+    | Person, Event, FAQPage, HowTo, Recipe, VideoObject
     |
     */
 
-    'schema_types' => null,
+    'schema_types' => [
+        'Article',
+        'BlogPosting',
+        'NewsArticle',
+        'Product',
+        'Person',
+        'Event',
+        'HowTo',
+        'Recipe',
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -2,10 +2,10 @@
 
 namespace BlackpigCreatif\Sceau\View\Components;
 
-use BlackpigCreatif\Sceau\Enums\SchemaType;
 use BlackpigCreatif\Sceau\Models\SeoData;
 use BlackpigCreatif\Sceau\Models\SeoSettings;
 use BlackpigCreatif\Sceau\Services\JsonLdGenerator;
+use BlackpigCreatif\Sceau\Services\PageSchemaBuilder;
 use BlackpigCreatif\Sceau\Services\SchemaStack;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
@@ -22,8 +22,22 @@ class Head extends Component
     public function __construct(public ?Model $model = null)
     {
         $this->seoData = $this->resolveSeoData();
+        $this->buildBlockSchemas();
         $this->jsonLd = $this->generateJsonLd();
         $this->hreflangTags = $this->generateHreflangTags();
+    }
+
+    /**
+     * Auto-populate the SchemaStack from Atelier blocks on the model.
+     * Must run after resolveSeoData() and before generateJsonLd().
+     */
+    protected function buildBlockSchemas(): void
+    {
+        if ($this->model === null || ! method_exists($this->model, 'publishedBlocks')) {
+            return;
+        }
+
+        PageSchemaBuilder::build($this->model);
     }
 
     protected function resolveSeoData(): ?SeoData
@@ -44,12 +58,23 @@ class Head extends Component
         $schemas = [];
 
         // 1. Add schemas from SeoData model (manual or auto-generated)
+        //    Skip if PageSchemaBuilder has already pushed a schema of the same @type —
+        //    the block-derived schema is richer and already incorporates SeoData fields.
         if ($this->seoData) {
             $generator = app(JsonLdGenerator::class);
 
-            // Generate schema from schema_type (respects manual schema_data if present)
             if ($schemaFromType = $generator->generateSchemaFromType($this->seoData)) {
-                $schemas[] = $schemaFromType;
+                $stackTypes = collect(app(SchemaStack::class)->all())
+                    ->pluck('@type')
+                    ->filter()
+                    ->map(fn (string $t): string => strtolower($t))
+                    ->all();
+
+                $type = strtolower($schemaFromType['@type'] ?? '');
+
+                if (! in_array($type, $stackTypes, true)) {
+                    $schemas[] = $schemaFromType;
+                }
             }
         }
 
@@ -142,7 +167,7 @@ class Head extends Component
 
         foreach ($availableLocales as $name => $code) {
             // Build URL with locale prefix
-            $localeUrl = rtrim($baseUrl, '/') . '/' . $code . $this->getPathWithoutLocale();
+            $localeUrl = rtrim($baseUrl, '/').'/'.$code.$this->getPathWithoutLocale();
 
             $tags[] = [
                 'hreflang' => $code,
@@ -153,7 +178,7 @@ class Head extends Component
         // Add x-default pointing to default locale
         $tags[] = [
             'hreflang' => 'x-default',
-            'href' => rtrim($baseUrl, '/') . '/' . $defaultLocale . $this->getPathWithoutLocale(),
+            'href' => rtrim($baseUrl, '/').'/'.$defaultLocale.$this->getPathWithoutLocale(),
         ];
 
         return $tags;
@@ -169,15 +194,15 @@ class Head extends Component
         // Remove locale prefix if present
         $availableLocales = config('app.available_locales', []);
         foreach ($availableLocales as $name => $code) {
-            if (str_starts_with($path, $code . '/')) {
-                return '/' . substr($path, strlen($code) + 1);
+            if (str_starts_with($path, $code.'/')) {
+                return '/'.substr($path, strlen($code) + 1);
             }
             if ($path === $code) {
                 return '';
             }
         }
 
-        return '/' . $path;
+        return '/'.$path;
     }
 
     public function render(): View

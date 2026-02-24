@@ -68,6 +68,7 @@ class SeoDataRelationManager extends RelationManager
                 CreateAction::make()
                     ->label('Add SEO Data')
                     ->icon(Heroicon::OutlinedPlus)
+                    ->createAnother(false)
                     ->visible(fn (): bool => $this->getOwnerRecord()->seoData === null),
                 
                     \LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher::make()

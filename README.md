@@ -1,8 +1,8 @@
 # Sceau
 
-**SEO metadata management plugin for FilamentPHP v4**
+**SEO metadata management plugin for FilamentPHP v5**
 
-Sceau provides comprehensive SEO metadata management for Laravel applications using Filament v4. It offers a polymorphic approach to SEO data, allowing any Eloquent model to have associated meta tags, Open Graph data, Twitter Cards, and JSON-LD structured data.
+Sceau provides comprehensive SEO metadata management for Laravel applications using Filament v5. It offers a polymorphic approach to SEO data, allowing any Eloquent model to have associated meta tags, Open Graph data, Twitter Cards, and JSON-LD structured data.
 
 ## Features
 
@@ -13,14 +13,14 @@ Sceau provides comprehensive SEO metadata management for Laravel applications us
 - **Structured Data** - Extensible JSON-LD schema generators for Schema.org markup
 - **Settings Management** - Database-backed global SEO settings via Filament panel
 - **Image Processing** - Integrated with Chambre Noir for optimized OG/Twitter images
-- **AI Optimization** - Content freshness signals and FAQ schema for modern search engines
+- **Atelier Integration** - Automatic schema generation from content blocks with no controller boilerplate
 - **Blade Component** - Simple `@seo($model)` directive for frontend rendering
 
 ## Requirements
 
 - PHP 8.2+
 - Laravel 11.0+ or 12.0+
-- Filament 4.0+
+- Filament 5.0+
 
 ## Installation
 
@@ -161,12 +161,11 @@ public function show(Page $page)
 {
     $products = Product::where('category_id', $page->category_id)->paginate(24);
 
-    // Push runtime schemas
     Schema::push([
         '@context' => 'https://schema.org',
         '@type' => 'ItemList',
         'numberOfItems' => $products->total(),
-        'itemListElement' => $products->map(fn($product, $index) => [
+        'itemListElement' => $products->map(fn ($product, $index) => [
             '@type' => 'ListItem',
             'position' => $index + 1,
             'item' => [
@@ -194,10 +193,8 @@ public function show(Page $page)
 {
     $products = Product::paginate(24);
 
-    // Product list with pricing
     Schema::push(ProductListSchema::makeDetailed($products));
 
-    // Breadcrumbs
     Schema::push(BreadcrumbListSchema::make([
         ['name' => 'Home', 'url' => route('home')],
         ['name' => 'Products', 'url' => route('products.index')],
@@ -208,94 +205,11 @@ public function show(Page $page)
 }
 ```
 
-**Available Helpers:**
+**Available helpers:**
 - `ArticleSchema::fromBlocks($blocks, $seoData)` - Generate Article from Atelier blocks
 - `ProductListSchema::make($products, $transformer)` - Generate ItemList
 - `ProductListSchema::makeDetailed($products)` - ItemList with pricing/images
 - `BreadcrumbListSchema::make($breadcrumbs)` - Generate BreadcrumbList
-
-### Block-Based Schema Generation
-
-For pages built with **Atelier blocks**, use the `PageSchemaBuilder`:
-
-```php
-use BlackpigCreatif\Sceau\Services\PageSchemaBuilder;
-
-public function show(Page $page)
-{
-    // Automatically generates schemas from all page blocks
-    PageSchemaBuilder::build($page);
-
-    return view('pages.show', ['page' => $page]);
-}
-```
-
-This will:
-1. Generate an **Article schema** from text/image blocks
-2. Generate **standalone schemas** from FAQ, Video, and other special blocks
-3. Respect block configuration (published status, etc.)
-
-### Atelier Block Integration
-
-Add schema contribution to your Atelier blocks using the `InteractsWithSchema` trait:
-
-**Text Block (contributes to Article):**
-```php
-use BlackpigCreatif\Atelier\Blocks\BaseBlock;
-use BlackpigCreatif\Sceau\Concerns\InteractsWithSchema;
-
-class TextBlock extends BaseBlock
-{
-    use InteractsWithSchema;
-
-    public function contributesToComposite(): bool
-    {
-        return true;
-    }
-
-    public function getCompositeContribution(): array
-    {
-        return [
-            'type' => 'text',
-            'content' => $this->data['content'] ?? '',
-        ];
-    }
-}
-```
-
-**FAQ Block (generates standalone schema):**
-```php
-use BlackpigCreatif\Atelier\Blocks\BaseBlock;
-use BlackpigCreatif\Sceau\Concerns\InteractsWithSchema;
-
-class FaqBlock extends BaseBlock
-{
-    use InteractsWithSchema;
-
-    public function hasStandaloneSchema(): bool
-    {
-        return !empty($this->data['pairs']);
-    }
-
-    public function toStandaloneSchema(): ?array
-    {
-        return [
-            '@context' => 'https://schema.org',
-            '@type' => 'FAQPage',
-            'mainEntity' => collect($this->data['pairs'])->map(fn($pair) => [
-                '@type' => 'Question',
-                'name' => $pair['question'],
-                'acceptedAnswer' => [
-                    '@type' => 'Answer',
-                    'text' => $pair['answer'],
-                ],
-            ])->toArray(),
-        ];
-    }
-}
-```
-
-See `/examples` directory for more block implementations.
 
 ### Multiple Schemas Per Page
 
@@ -304,25 +218,69 @@ Schema.org supports (and Google expects) multiple independent schemas on a singl
 ```php
 public function show(Page $page)
 {
-    // Article content from blocks
-    PageSchemaBuilder::build($page);
+    // Article content + typed block schemas from Atelier (auto-wired via Head component)
 
-    // Product carousel at bottom
+    // Additional runtime schemas pushed from the controller
     Schema::push(ProductListSchema::make($featuredProducts));
 
-    // Category FAQs
-    Schema::push([
-        '@context' => 'https://schema.org',
-        '@type' => 'FAQPage',
-        'mainEntity' => [...],
-    ]);
-
-    // Breadcrumbs
     Schema::push(BreadcrumbListSchema::make($breadcrumbs));
 }
 ```
 
-Final output will be an **array of schemas**, each validated independently by Google.
+Final output will be an array of schemas, each validated independently by Google.
+
+---
+
+## Atelier Block Integration
+
+When [Atelier](https://github.com/blackpig-creatif/atelier) is installed alongside Sceau, the `<x-sceau::head>` component automatically generates Schema.org output from your page's blocks. No controller code is required.
+
+```blade
+{{-- This is all you need --}}
+<x-sceau::head :model="$page" />
+```
+
+For the complete integration reference, see [docs/atelier-integration.md](docs/atelier-integration.md).
+
+### How it works
+
+The `Head` component calls `PageSchemaBuilder::build($page)` automatically for any model that has `publishedBlocks`. The builder runs three passes over the blocks:
+
+1. **Article schema** — assembled from all blocks implementing `HasCompositeSchema` (text content, image URLs)
+2. **Legacy standalone schemas** — blocks implementing `HasStandaloneSchema` that build the full schema array themselves
+3. **Driver-based typed schemas** — blocks implementing `HasSchemaContribution` that declare a `SchemaType` and provide data; `SceauBlockSchemaDriver` constructs the schema array using Sceau's generators
+
+### Wiring the driver
+
+In your application's `config/atelier.php`:
+
+```php
+'schema_driver' => \BlackpigCreatif\Sceau\Schema\Drivers\SceauBlockSchemaDriver::class,
+```
+
+This registers `SceauBlockSchemaDriver` as the singleton implementation of `BlockSchemaDriverInterface`. The driver matches on `SchemaType` value and delegates construction to Sceau's schema generators.
+
+### Built-in block schemas
+
+| Block | Schema output |
+|-------|--------------|
+| `TextBlock` | Article body text |
+| `TextWithImageBlock` | Article body text + image |
+| `TextWithTwoImagesBlock` | Article body text + two images |
+| `GalleryBlock` | Article image URLs |
+| `CarouselBlock` | Article image URLs |
+| `VideoBlock` | `VideoObject` |
+| `FaqsBlock` | `FAQPage` |
+
+### Adding a new SchemaType
+
+To support a new type in `SceauBlockSchemaDriver`:
+
+1. Add a case to the `match` expression in `resolveSchema()`
+2. Add a `protected buildXxxSchema(array $data): ?array` method
+3. Add a `fromXxx(array $data): array` static method to the corresponding schema generator
+
+---
 
 ## Extending SeoData Schemas
 
@@ -342,29 +300,15 @@ class CustomArticleSchema extends ArticleSchema
     {
         $page = $seoData->seoable;
 
-        // Custom logic for multi-author support
         if ($page->authors && $page->authors->count() > 0) {
-            return $page->authors->map(fn($author) => [
+            return $page->authors->map(fn ($author) => [
                 '@type' => 'Person',
-                'name' => $author->name,
-                'url' => route('authors.show', $author),
+                'name'  => $author->name,
+                'url'   => route('authors.show', $author),
             ])->toArray();
         }
 
         return parent::getAuthor($seoData);
-    }
-
-    protected function getPublisher(SeoData $seoData): array|null
-    {
-        return [
-            '@type' => 'Organization',
-            'name' => config('app.name'),
-            'logo' => [
-                '@type' => 'ImageObject',
-                'url' => asset('images/logo.png'),
-            ],
-            'url' => config('app.url'),
-        ];
     }
 }
 ```
@@ -406,20 +350,19 @@ class CourseSchema extends BaseSchema
     public function generate(SeoData $seoData): array
     {
         $schema = $this->baseSchema();
-
         $course = $seoData->seoable;
 
-        $schema['name'] = $this->getName($seoData);
+        $schema['name']        = $this->getName($seoData);
         $schema['description'] = $this->getDescription($seoData);
-        $schema['provider'] = [
+        $schema['provider']    = [
             '@type' => 'Organization',
-            'name' => config('app.name'),
+            'name'  => config('app.name'),
         ];
 
         if ($course->price) {
             $schema['offers'] = [
-                '@type' => 'Offer',
-                'price' => $course->price,
+                '@type'         => 'Offer',
+                'price'         => $course->price,
                 'priceCurrency' => 'USD',
             ];
         }
@@ -427,17 +370,6 @@ class CourseSchema extends BaseSchema
         return $this->removeNullValues($schema);
     }
 }
-```
-
-Register it:
-
-```php
-use App\SEO\Schemas\CourseSchema;
-
-$generator->registerGenerator(
-    SchemaType::Course, // Add this to SchemaType enum first
-    new CourseSchema
-);
 ```
 
 ### Container Binding for Global Override
@@ -454,7 +386,7 @@ public function register(): void
 }
 ```
 
-Now whenever `JsonLdGenerator` instantiates `new ArticleSchema`, Laravel's container will resolve your custom implementation instead.
+---
 
 ## Accessing SEO Data
 
@@ -463,16 +395,11 @@ The `HasSeoData` trait provides convenient accessor methods:
 ```php
 $page = Page::with('seoData')->first();
 
-// Relationship
-$seoData = $page->seoData;
-
-// Helper methods
-$title = $page->getSeoTitle(); // Falls back to $page->title or $page->name
+$title       = $page->getSeoTitle();        // Falls back to $page->title or $page->name
 $description = $page->getSeoDescription();
-$hasSchema = $page->seoData?->hasSchemaMarkup();
-$hasFaq = $page->seoData?->hasFaqPairs();
+$hasSchema   = $page->seoData?->hasSchemaMarkup();
+$hasFaq      = $page->seoData?->hasFaqPairs();
 
-// Specific attribute with fallback
 $ogTitle = $page->getSeoAttribute('open_graph.title', 'Default Title');
 ```
 
@@ -486,6 +413,14 @@ When rendering OG/Twitter images, the package will:
 3. Apply the appropriate Chambre Noir conversion (`og`, `twitter`, etc.)
 
 Override this behavior by extending `SeoData` and customizing the image resolution methods.
+
+---
+
+## Documentation
+
+- [Atelier Integration](docs/atelier-integration.md) -- automatic block schema generation reference
+
+---
 
 ## License
 

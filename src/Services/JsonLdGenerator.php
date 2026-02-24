@@ -8,10 +8,12 @@ use BlackpigCreatif\Sceau\SchemaGenerators\ArticleSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\BaseSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\BlogPostingSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\FaqSchema;
+use BlackpigCreatif\Sceau\SchemaGenerators\HowToSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\LocalBusinessSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\NewsArticleSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\OrganizationSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\ProductSchema;
+use BlackpigCreatif\Sceau\SchemaGenerators\RecipeSchema;
 
 class JsonLdGenerator
 {
@@ -111,5 +113,7 @@ class JsonLdGenerator
         $this->registerGenerator(SchemaType::Organization, new OrganizationSchema);
         $this->registerGenerator(SchemaType::LocalBusiness, new LocalBusinessSchema);
         $this->registerGenerator(SchemaType::FAQPage, new FaqSchema);
+        $this->registerGenerator(SchemaType::HowTo, new HowToSchema);
+        $this->registerGenerator(SchemaType::Recipe, new RecipeSchema);
     }
 }
