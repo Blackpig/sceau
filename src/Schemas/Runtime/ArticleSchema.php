@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Sceau\Schemas\Runtime;
 
+use BlackpigCreatif\Atelier\Contracts\HasCompositeSchema;
 use BlackpigCreatif\Sceau\Models\SeoData;
 use Illuminate\Support\Collection;
 
@@ -15,22 +16,31 @@ class ArticleSchema
         // Collect all composite contributions from blocks
         $contributions = $blocks
             ->map(fn ($block) => $block->hydrateBlock())
-            ->filter(fn ($instance) => method_exists($instance, 'contributesToComposite')
+            ->filter(fn ($instance) => $instance instanceof HasCompositeSchema
                 && $instance->contributesToComposite())
             ->map(fn ($instance) => $instance->getCompositeContribution())
             ->filter();
 
-        // Build article body from text contributions
+        // Build article body from all contributions that carry text content
         $articleBody = $contributions
-            ->where('type', 'text')
+            ->filter(fn ($c) => ! empty($c['content']))
             ->pluck('content')
             ->filter()
             ->implode("\n\n");
 
-        // Collect images
+        // Collect images — single 'url' (text, image, text_with_image) or 'urls' (gallery, carousel, text_with_images)
         $images = $contributions
-            ->where('type', 'image')
-            ->pluck('url')
+            ->flatMap(function (array $c): array {
+                if (! empty($c['url'])) {
+                    return [$c['url']];
+                }
+
+                if (! empty($c['urls']) && is_array($c['urls'])) {
+                    return $c['urls'];
+                }
+
+                return [];
+            })
             ->filter()
             ->values()
             ->toArray();

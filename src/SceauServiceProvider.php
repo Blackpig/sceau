@@ -13,11 +13,11 @@ class SceauServiceProvider extends PackageServiceProvider
     public function boot()
     {
         parent::boot();
-        
+
         // Load migrations manually - this is more reliable
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
-    
+
     public function configurePackage(Package $package): void
     {
         $package
@@ -32,7 +32,7 @@ class SceauServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        // Register SchemaStack as a singleton
+        $this->app->singleton(SchemaStack::class);
     }
 
     public function packageBooted(): void

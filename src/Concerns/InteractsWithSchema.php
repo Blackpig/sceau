@@ -3,42 +3,44 @@
 namespace BlackpigCreatif\Sceau\Concerns;
 
 /**
- * Trait for Atelier blocks to contribute to Schema.org structured data.
+ * Provides default no-op implementations of the Atelier schema contracts.
  *
- * By default, blocks don't contribute to any schemas.
- * Override methods as needed for your block type.
+ * Retained for backwards compatibility. New blocks should rely on the default
+ * implementations provided by BaseBlock (HasCompositeSchema, HasStandaloneSchema,
+ * HasSchemaContribution) directly rather than using this trait.
+ *
+ * @deprecated Use BaseBlock's built-in contract implementations instead.
  */
 trait InteractsWithSchema
 {
-    /**
-     * Does this block contribute to a composite schema (like Article)?
-     */
     public function contributesToComposite(): bool
     {
         return false;
     }
 
-    /**
-     * Get data to contribute to composite schema.
-     */
     public function getCompositeContribution(): ?array
     {
         return null;
     }
 
-    /**
-     * Does this block generate its own standalone schema?
-     */
     public function hasStandaloneSchema(): bool
     {
         return false;
     }
 
-    /**
-     * Get standalone schema array.
-     */
     public function toStandaloneSchema(): ?array
     {
         return null;
+    }
+
+    public function getSchemaType(): ?\BackedEnum
+    {
+        return null;
+    }
+
+    /** @return array<string, mixed> */
+    public function getSchemaData(): array
+    {
+        return [];
     }
 }

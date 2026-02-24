@@ -2,6 +2,8 @@
 
 namespace BlackpigCreatif\Sceau\Contracts;
 
+use BlackpigCreatif\Sceau\Enums\SchemaType;
+
 interface HasSchemaContribution
 {
     /**
@@ -28,4 +30,18 @@ interface HasSchemaContribution
      * Should return a complete Schema.org schema array.
      */
     public function toStandaloneSchema(): ?array;
+
+    /**
+     * Return the SchemaType this block represents for driver-based schema generation.
+     * Return null if this block does not declare a typed schema.
+     */
+    public function getSchemaType(): ?SchemaType;
+
+    /**
+     * Return the data payload the driver uses to build the schema array.
+     * The expected shape is SchemaType-specific — see SceauBlockSchemaDriver for contracts.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSchemaData(): array;
 }

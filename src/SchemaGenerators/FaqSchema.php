@@ -13,22 +13,32 @@ class FaqSchema extends BaseSchema
 
     public function generate(SeoData $seoData): array
     {
-        $schema = $this->baseSchema();
+        return static::fromPairs($seoData->faq_pairs);
+    }
 
-        $mainEntity = [];
+    /**
+     * Build a FAQPage schema array directly from Q&A pairs,
+     * without requiring a SeoData model instance.
+     *
+     * @param  array<int, array{question: string, answer: string}>  $pairs
+     * @return array<string, mixed>
+     */
+    public static function fromPairs(array $pairs): array
+    {
+        $instance = new static;
+        $schema = $instance->baseSchema();
 
-        foreach ($seoData->faq_pairs as $pair) {
-            $mainEntity[] = [
+        $schema['mainEntity'] = array_map(
+            fn (array $pair): array => [
                 '@type' => 'Question',
                 'name' => $pair['question'],
                 'acceptedAnswer' => [
                     '@type' => 'Answer',
                     'text' => $pair['answer'],
                 ],
-            ];
-        }
-
-        $schema['mainEntity'] = $mainEntity;
+            ],
+            $pairs
+        );
 
         return $schema;
     }
