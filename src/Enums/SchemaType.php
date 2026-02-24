@@ -16,6 +16,7 @@ enum SchemaType: string implements HasLabel
     case Event = 'Event';
     case FAQPage = 'FAQPage';
     case HowTo = 'HowTo';
+    case ItemList = 'ItemList';
     case Recipe = 'Recipe';
     case VideoObject = 'VideoObject';
 
@@ -32,6 +33,7 @@ enum SchemaType: string implements HasLabel
             self::Event => 'Event',
             self::FAQPage => 'FAQ Page',
             self::HowTo => 'How-To Guide',
+            self::ItemList => 'Item List',
             self::Recipe => 'Recipe',
             self::VideoObject => 'Video',
         };

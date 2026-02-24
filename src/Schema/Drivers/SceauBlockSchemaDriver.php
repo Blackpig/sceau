@@ -7,6 +7,8 @@ use BlackpigCreatif\Atelier\Contracts\HasSchemaContribution;
 use BlackpigCreatif\Sceau\Enums\SchemaType;
 use BlackpigCreatif\Sceau\SchemaGenerators\FaqSchema;
 use BlackpigCreatif\Sceau\SchemaGenerators\VideoSchema;
+use BlackpigCreatif\Sceau\Schemas\Runtime\ProductListSchema;
+use Illuminate\Support\Collection;
 
 class SceauBlockSchemaDriver implements BlockSchemaDriverInterface
 {
@@ -29,6 +31,7 @@ class SceauBlockSchemaDriver implements BlockSchemaDriverInterface
 
         return match ($type->value) {
             SchemaType::FAQPage->value => $this->buildFaqPageSchema($block->getSchemaData()),
+            SchemaType::ItemList->value => $this->buildItemListSchema($block->getSchemaData()),
             SchemaType::VideoObject->value => $this->buildVideoObjectSchema($block->getSchemaData()),
             default => null,
         };
@@ -60,5 +63,49 @@ class SceauBlockSchemaDriver implements BlockSchemaDriverInterface
         }
 
         return VideoSchema::fromData($data);
+    }
+
+    /**
+     * @param  array{products: array<int, array{name: string, description: string, price: ?string, image: ?string, available: bool}>}  $data
+     * @return array<string, mixed>|null
+     */
+    protected function buildItemListSchema(array $data): ?array
+    {
+        $items = $data['products'] ?? [];
+
+        if (empty($items)) {
+            return null;
+        }
+
+        $collection = Collection::make($items);
+
+        return ProductListSchema::make($collection, function (array $product, int $index): array {
+            $item = [
+                '@type' => 'Product',
+                'name' => $product['name'],
+                'description' => $product['description'],
+            ];
+
+            if (! empty($product['image'])) {
+                $item['image'] = $product['image'];
+            }
+
+            if (! empty($product['price'])) {
+                $item['offers'] = [
+                    '@type' => 'Offer',
+                    'price' => $product['price'],
+                    'priceCurrency' => config('app.currency', 'EUR'),
+                    'availability' => $product['available']
+                        ? 'https://schema.org/InStock'
+                        : 'https://schema.org/OutOfStock',
+                ];
+            }
+
+            return [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'item' => $item,
+            ];
+        });
     }
 }
