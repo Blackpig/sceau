@@ -3,6 +3,7 @@
 namespace BlackpigCreatif\Sceau\Schemas\Runtime;
 
 use BlackpigCreatif\Atelier\Contracts\HasCompositeSchema;
+use BlackpigCreatif\Sceau\Enums\SchemaType;
 use BlackpigCreatif\Sceau\Models\SeoData;
 use Illuminate\Support\Collection;
 
@@ -45,9 +46,17 @@ class ArticleSchema
             ->values()
             ->toArray();
 
+        // Use the SeoData schema_type if it is an Article-family type (BlogPosting, NewsArticle),
+        // so the block-derived schema matches what the editor intended and deduplication works.
+        $articleTypes = [SchemaType::Article, SchemaType::BlogPosting, SchemaType::NewsArticle];
+
+        $type = in_array($seoData?->schema_type, $articleTypes, true)
+            ? $seoData->schema_type->value
+            : 'Article';
+
         $schema = [
             '@context' => 'https://schema.org',
-            '@type' => 'Article',
+            '@type'    => $type,
         ];
 
         // Headline from SEO data or parent model

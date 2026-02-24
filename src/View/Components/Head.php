@@ -58,12 +58,23 @@ class Head extends Component
         $schemas = [];
 
         // 1. Add schemas from SeoData model (manual or auto-generated)
+        //    Skip if PageSchemaBuilder has already pushed a schema of the same @type —
+        //    the block-derived schema is richer and already incorporates SeoData fields.
         if ($this->seoData) {
             $generator = app(JsonLdGenerator::class);
 
-            // Generate schema from schema_type (respects manual schema_data if present)
             if ($schemaFromType = $generator->generateSchemaFromType($this->seoData)) {
-                $schemas[] = $schemaFromType;
+                $stackTypes = collect(app(SchemaStack::class)->all())
+                    ->pluck('@type')
+                    ->filter()
+                    ->map(fn (string $t): string => strtolower($t))
+                    ->all();
+
+                $type = strtolower($schemaFromType['@type'] ?? '');
+
+                if (! in_array($type, $stackTypes, true)) {
+                    $schemas[] = $schemaFromType;
+                }
             }
         }
 

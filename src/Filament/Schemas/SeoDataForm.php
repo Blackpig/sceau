@@ -219,7 +219,7 @@ class SeoDataForm
                     ->schema([
                         Select::make('schema_type')
                             ->label('Schema Type')
-                            ->options(SchemaType::class)
+                            ->options(static::schemaTypeOptions())
                             ->live()
                             ->helperText('Select the type of content to generate appropriate structured data.'),
 
@@ -257,6 +257,36 @@ class SeoDataForm
                             ),
                     ]),
             ]);
+    }
+
+    /**
+     * Build the schema type options for the Select field.
+     * When `sceau.schema_types` is set, only those values are returned.
+     * Otherwise all SchemaType cases are included.
+     *
+     * @return array<string, string>
+     */
+    protected static function schemaTypeOptions(): array
+    {
+        $allowed = config('sceau.schema_types');
+
+        $cases = SchemaType::cases();
+
+        if (is_array($allowed) && ! empty($allowed)) {
+            $cases = array_filter(
+                $cases,
+                fn (SchemaType $case): bool => in_array($case->value, $allowed, true)
+            );
+        }
+
+        return array_column(
+            array_map(
+                fn (SchemaType $case): array => ['value' => $case->value, 'label' => $case->getLabel()],
+                $cases
+            ),
+            'label',
+            'value'
+        );
     }
 
     protected static function aiOptimizationTab(): Tabs\Tab

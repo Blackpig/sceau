@@ -32,13 +32,22 @@ class PageSchemaBuilder
         $blocks = $page->publishedBlocks()->get();
 
         // Pass 1: Composite Article schema
-        $hasArticleContent = $blocks->contains(function ($block) {
+        // Only push an Article if at least one block contributes actual text body content.
+        // Image-only contributions (gallery, carousel) are included in the Article when text
+        // is also present, but are not sufficient on their own to produce a valid Article schema.
+        $hasTextContent = $blocks->contains(function ($block) {
             $instance = $block->hydrateBlock();
 
-            return $instance instanceof HasCompositeSchema && $instance->contributesToComposite();
+            if (! ($instance instanceof HasCompositeSchema) || ! $instance->contributesToComposite()) {
+                return false;
+            }
+
+            $contribution = $instance->getCompositeContribution();
+
+            return ! empty($contribution['content']);
         });
 
-        if ($hasArticleContent) {
+        if ($hasTextContent) {
             Schema::push(ArticleSchema::fromBlocks($blocks, $page->seoData ?? null));
         }
 
