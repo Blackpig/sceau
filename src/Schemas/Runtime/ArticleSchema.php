@@ -62,7 +62,7 @@ class ArticleSchema
         // Headline from SEO data or parent model
         if ($seoData?->title) {
             $schema['headline'] = $seoData->title;
-        } elseif ($seoData?->seoable?->title) {
+        } elseif ($seoData?->seoable && isset($seoData->seoable->title)) {
             $schema['headline'] = $seoData->seoable->title;
         }
 

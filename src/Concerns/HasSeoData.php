@@ -30,9 +30,8 @@ trait HasSeoData
     public function getSeoTitle(): ?string
     {
         return $this->seoData?->title
-            ?? $this->title
-            ?? $this->name
-            ?? null;
+            ?? (isset($this->title) ? $this->title : null)
+            ?? (isset($this->name) ? $this->name : null);
     }
 
     public function getSeoDescription(): ?string
