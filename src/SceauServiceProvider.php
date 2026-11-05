@@ -2,6 +2,8 @@
 
 namespace BlackpigCreatif\Sceau;
 
+use BlackpigCreatif\Grimoire\Facades\Grimoire;
+use BlackpigCreatif\Sceau\Filament\Clusters\SceauDocumentationCluster;
 use BlackpigCreatif\Sceau\Services\SchemaStack;
 use BlackpigCreatif\Sceau\View\Components\Head;
 use Illuminate\Support\Facades\Blade;
@@ -41,13 +43,13 @@ class SceauServiceProvider extends PackageServiceProvider
         // Runs here (once per application boot) rather than in SceauPlugin::register()
         // which fires once per panel and would cause duplicate registration errors in
         // multi-panel applications.
-        if (class_exists(\BlackpigCreatif\Grimoire\Facades\Grimoire::class)) {
-            \BlackpigCreatif\Grimoire\Facades\Grimoire::registerTome(
+        if (class_exists(Grimoire::class)) {
+            Grimoire::registerTome(
                 id: 'sceau',
                 label: 'Sceau SEO',
                 icon: 'heroicon-o-magnifying-glass',
-                path: dirname(__DIR__) . '/resources/grimoire/sceau',
-                clusterClass: \BlackpigCreatif\Sceau\Filament\Clusters\SceauDocumentationCluster::class,
+                path: dirname(__DIR__).'/resources/grimoire/sceau',
+                clusterClass: SceauDocumentationCluster::class,
                 slug: 'sceau',
             );
         }

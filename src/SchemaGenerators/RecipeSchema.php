@@ -32,12 +32,12 @@ class RecipeSchema extends BaseSchema
         if ($parent && method_exists($parent, 'author') && $parent->author) {
             $schema['author'] = [
                 '@type' => 'Person',
-                'name'  => $parent->author->name ?? null,
+                'name' => $parent->author->name ?? null,
             ];
         } elseif ($settings?->site_name) {
             $schema['author'] = [
                 '@type' => 'Organization',
-                'name'  => $settings->site_name,
+                'name' => $settings->site_name,
             ];
         }
 
@@ -52,25 +52,25 @@ class RecipeSchema extends BaseSchema
     public function getSkeleton(): array
     {
         return [
-            '@context'         => 'https://schema.org',
-            '@type'            => 'Recipe',
-            'name'             => '',
-            'image'            => [],
-            'description'      => '',
-            'keywords'         => '',
-            'author'           => [
+            '@context' => 'https://schema.org',
+            '@type' => 'Recipe',
+            'name' => '',
+            'image' => [],
+            'description' => '',
+            'keywords' => '',
+            'author' => [
                 '@type' => 'Person',
-                'name'  => '',
+                'name' => '',
             ],
-            'datePublished'    => '',
-            'prepTime'         => '',   // ISO 8601 duration, e.g. PT15M
-            'cookTime'         => '',   // ISO 8601 duration, e.g. PT1H
-            'totalTime'        => '',   // ISO 8601 duration, e.g. PT1H15M
-            'recipeCategory'   => '',   // e.g. "Dessert"
-            'recipeCuisine'    => '',   // e.g. "French"
-            'recipeYield'      => '',   // e.g. "4 servings"
-            'nutrition'        => [
-                '@type'   => 'NutritionInformation',
+            'datePublished' => '',
+            'prepTime' => '',   // ISO 8601 duration, e.g. PT15M
+            'cookTime' => '',   // ISO 8601 duration, e.g. PT1H
+            'totalTime' => '',   // ISO 8601 duration, e.g. PT1H15M
+            'recipeCategory' => '',   // e.g. "Dessert"
+            'recipeCuisine' => '',   // e.g. "French"
+            'recipeYield' => '',   // e.g. "4 servings"
+            'nutrition' => [
+                '@type' => 'NutritionInformation',
                 'calories' => '',       // e.g. "270 calories"
             ],
             'recipeIngredient' => [
@@ -79,25 +79,25 @@ class RecipeSchema extends BaseSchema
             'recipeInstructions' => [
                 [
                     '@type' => 'HowToStep',
-                    'name'  => '',
-                    'text'  => '',
-                    'url'   => '',
+                    'name' => '',
+                    'text' => '',
+                    'url' => '',
                     'image' => '',
                 ],
             ],
-            'aggregateRating'  => [
-                '@type'       => 'AggregateRating',
+            'aggregateRating' => [
+                '@type' => 'AggregateRating',
                 'ratingValue' => '',
                 'ratingCount' => '',
             ],
             'video' => [
-                '@type'       => 'VideoObject',
-                'name'        => '',
+                '@type' => 'VideoObject',
+                'name' => '',
                 'description' => '',
                 'thumbnailUrl' => [],
-                'contentUrl'  => '',
-                'embedUrl'    => '',
-                'uploadDate'  => '',
+                'contentUrl' => '',
+                'embedUrl' => '',
+                'uploadDate' => '',
             ],
         ];
     }
