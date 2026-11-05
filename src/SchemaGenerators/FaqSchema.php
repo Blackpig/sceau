@@ -11,9 +11,14 @@ class FaqSchema extends BaseSchema
         return 'FAQPage';
     }
 
+    /**
+     * SeoData holds no Q&A pairs of its own: FAQPage schemas are built from Atelier
+     * FAQ blocks via the SchemaStack, or from custom schema_data JSON. Returning an
+     * empty array tells JsonLdGenerator to emit nothing rather than an empty FAQPage.
+     */
     public function generate(SeoData $seoData): array
     {
-        return static::fromPairs($seoData->faq_pairs);
+        return [];
     }
 
     /**

@@ -75,7 +75,7 @@ class JsonLdGenerator
         $generator = $this->getGenerator($seoData->schema_type);
 
         if ($generator) {
-            return $generator->generate($seoData);
+            return $generator->generate($seoData) ?: null;
         }
 
         // Fallback to basic schema
