@@ -118,6 +118,19 @@ public function panel(Panel $panel): Panel
 }
 ```
 
+#### Replacing the settings page
+
+The built-in page stores a single settings record. To change that behaviour (for example, one record per panel in a multi-panel app), extend the page and hand it to the plugin. Only your class is registered, so the panel never shows two **SEO Settings** items:
+
+```php
+use App\Filament\Pages\ManageSeoSettings;
+
+SceauPlugin::make()
+    ->settingsPage(ManageSeoSettings::class),
+```
+
+The class must extend `BlackpigCreatif\Sceau\Filament\Pages\ManageSeoSettings`. Do not also register it with `->pages()` on the panel.
+
 ## Schema Architecture
 
 Sceau uses a **dual-layer approach** to schema generation:
