@@ -2,36 +2,26 @@
 
 use BlackpigCreatif\Sceau\Enums\SchemaType;
 use BlackpigCreatif\Sceau\Models\SeoData;
+use BlackpigCreatif\Sceau\SchemaGenerators\FaqSchema;
 use BlackpigCreatif\Sceau\Services\JsonLdGenerator;
 
 it('generate returns null when no schema markup', function () {
-    $seoData = new SeoData();
-    $generator = new JsonLdGenerator();
-
-    expect($generator->generate($seoData))->toBeNull();
+    expect((new JsonLdGenerator)->generate(new SeoData))->toBeNull();
 });
 
 it('generate returns Article schema with proper structure', function () {
-    $seoData = SeoData::create([
-        'seoable_type' => 'App\\Models\\Page',
-        'seoable_id' => 1,
+    $seoData = new SeoData([
         'title' => 'Test Article',
         'description' => 'Test Description',
         'schema_type' => SchemaType::Article,
-        'schema_data' => ['headline' => 'Custom Headline'],
-        'content_updated_at' => now(),
     ]);
 
-    $generator = new JsonLdGenerator();
-    $json = $generator->generate($seoData);
+    $decoded = json_decode((new JsonLdGenerator)->generate($seoData), true);
 
-    expect($json)->not->toBeNull();
-
-    $decoded = json_decode($json, true);
-    expect($decoded)->toBeArray()
-        ->and($decoded['@context'])->toBe('https://schema.org')
+    expect($decoded['@context'])->toBe('https://schema.org')
         ->and($decoded['@type'])->toBe('Article')
-        ->and($decoded['headline'])->toBe('Custom Headline');
+        ->and($decoded['headline'])->toBe('Test Article')
+        ->and($decoded['description'])->toBe('Test Description');
 });
 
 it('generate returns Product schema with proper structure', function () {
@@ -44,120 +34,70 @@ it('generate returns Product schema with proper structure', function () {
         'schema_data' => [],
     ]);
 
-    $generator = new JsonLdGenerator();
-    $json = $generator->generate($seoData);
+    $decoded = json_decode((new JsonLdGenerator)->generate($seoData), true);
 
-    $decoded = json_decode($json, true);
     expect($decoded['@type'])->toBe('Product')
         ->and($decoded['name'])->toBe('Test Product')
         ->and($decoded['description'])->toBe('Product Description');
 });
 
-it('generate returns FAQ schema when faq_pairs exist', function () {
-    $seoData = SeoData::create([
-        'seoable_type' => 'App\\Models\\Page',
-        'seoable_id' => 1,
-        'faq_pairs' => [
-            ['question' => 'What is SEO?', 'answer' => 'Search Engine Optimization'],
-            ['question' => 'Why is SEO important?', 'answer' => 'It helps websites rank better'],
-        ],
-    ]);
-
-    $generator = new JsonLdGenerator();
-    $json = $generator->generate($seoData);
-
-    $decoded = json_decode($json, true);
-    expect($decoded)->toBeArray()
-        ->and($decoded['@type'])->toBe('FAQPage')
-        ->and($decoded['mainEntity'])->toBeArray()
-        ->and($decoded['mainEntity'])->toHaveCount(2)
-        ->and($decoded['mainEntity'][0]['@type'])->toBe('Question')
-        ->and($decoded['mainEntity'][0]['name'])->toBe('What is SEO?');
-});
-
-it('generate combines Article and FAQ schemas into array', function () {
-    $seoData = SeoData::create([
-        'seoable_type' => 'App\\Models\\Page',
-        'seoable_id' => 1,
-        'title' => 'Test Article',
-        'schema_type' => SchemaType::Article,
-        'schema_data' => [],
-        'faq_pairs' => [
-            ['question' => 'What is this?', 'answer' => 'An article'],
-        ],
-    ]);
-
-    $generator = new JsonLdGenerator();
-    $json = $generator->generate($seoData);
-
-    $decoded = json_decode($json, true);
-    expect($decoded)->toBeArray()
-        ->and($decoded)->toHaveCount(2)
-        ->and($decoded[0]['@type'])->toBe('Article')
-        ->and($decoded[1]['@type'])->toBe('FAQPage');
-});
-
 it('generate uses custom schema_data when provided', function () {
-    $seoData = SeoData::create([
-        'seoable_type' => 'App\\Models\\Page',
-        'seoable_id' => 1,
+    $seoData = new SeoData([
         'schema_type' => SchemaType::Article,
-        'schema_data' => [
+        'schema_data' => json_encode([
             'headline' => 'Custom Headline',
-            'author' => [
-                '@type' => 'Person',
-                'name' => 'John Doe',
-            ],
-        ],
+            'author' => ['@type' => 'Person', 'name' => 'John Doe'],
+        ]),
     ]);
 
-    $generator = new JsonLdGenerator();
-    $json = $generator->generate($seoData);
+    $decoded = json_decode((new JsonLdGenerator)->generate($seoData), true);
 
-    $decoded = json_decode($json, true);
-    expect($decoded['headline'])->toBe('Custom Headline')
+    expect($decoded['@type'])->toBe('Article')
+        ->and($decoded['headline'])->toBe('Custom Headline')
         ->and($decoded['author']['name'])->toBe('John Doe');
 });
 
-it('generateFaqSchema creates valid FAQPage structure', function () {
+it('generate returns null for an FAQPage without custom schema_data', function () {
+    $seoData = new SeoData(['schema_type' => SchemaType::FAQPage]);
+
+    expect((new JsonLdGenerator)->generate($seoData))->toBeNull();
+});
+
+it('generate uses custom schema_data for an FAQPage', function () {
     $seoData = new SeoData([
-        'faq_pairs' => [
-            ['question' => 'Q1', 'answer' => 'A1'],
-            ['question' => 'Q2', 'answer' => 'A2'],
-        ],
+        'schema_type' => SchemaType::FAQPage,
+        'schema_data' => json_encode(['mainEntity' => [['@type' => 'Question', 'name' => 'Q1']]]),
     ]);
 
-    $generator = new JsonLdGenerator();
-    $schema = $generator->generateSchemaFromType($seoData);
+    $decoded = json_decode((new JsonLdGenerator)->generate($seoData), true);
 
-    // Since schema_type is null, this should return null
-    expect($schema)->toBeNull();
+    expect($decoded['@type'])->toBe('FAQPage')
+        ->and($decoded['mainEntity'][0]['name'])->toBe('Q1');
+});
 
-    // But we can test the protected method indirectly through generate
-    $seoData->faq_pairs = [
+it('FaqSchema::fromPairs builds a valid FAQPage structure', function () {
+    $schema = FaqSchema::fromPairs([
         ['question' => 'Q1', 'answer' => 'A1'],
-    ];
-    $json = $generator->generate($seoData);
-    $decoded = json_decode($json, true);
+        ['question' => 'Q2', 'answer' => 'A2'],
+    ]);
 
-    expect($decoded['mainEntity'][0]['acceptedAnswer']['text'])->toBe('A1');
+    expect($schema['@type'])->toBe('FAQPage')
+        ->and($schema['mainEntity'])->toHaveCount(2)
+        ->and($schema['mainEntity'][0]['@type'])->toBe('Question')
+        ->and($schema['mainEntity'][0]['name'])->toBe('Q1')
+        ->and($schema['mainEntity'][0]['acceptedAnswer']['text'])->toBe('A1');
 });
 
 it('JSON output is valid and parseable', function () {
-    $seoData = SeoData::create([
-        'seoable_type' => 'App\\Models\\Page',
-        'seoable_id' => 1,
+    $seoData = new SeoData([
         'title' => 'Test',
         'schema_type' => SchemaType::Article,
-        'schema_data' => [],
     ]);
 
-    $generator = new JsonLdGenerator();
-    $json = $generator->generate($seoData);
+    $json = (new JsonLdGenerator)->generate($seoData);
 
-    expect($json)->toBeString();
+    json_decode($json, true);
 
-    $decoded = json_decode($json, true);
-    expect(json_last_error())->toBe(JSON_ERROR_NONE)
-        ->and($decoded)->toBeArray();
+    expect($json)->toBeString()
+        ->and(json_last_error())->toBe(JSON_ERROR_NONE);
 });

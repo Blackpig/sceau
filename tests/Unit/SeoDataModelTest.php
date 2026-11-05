@@ -2,22 +2,7 @@
 
 use BlackpigCreatif\Sceau\Enums\SchemaType;
 use BlackpigCreatif\Sceau\Models\SeoData;
-
-it('casts open_graph to array', function () {
-    $seoData = new SeoData();
-    $seoData->open_graph = ['title' => 'Test'];
-
-    expect($seoData->open_graph)->toBeArray()
-        ->and($seoData->open_graph['title'])->toBe('Test');
-});
-
-it('casts twitter_card to array', function () {
-    $seoData = new SeoData();
-    $seoData->twitter_card = ['title' => 'Test'];
-
-    expect($seoData->twitter_card)->toBeArray()
-        ->and($seoData->twitter_card['title'])->toBe('Test');
-});
+use Illuminate\Support\Carbon;
 
 it('casts schema_type to SchemaType enum', function () {
     $seoData = SeoData::create([
@@ -26,26 +11,18 @@ it('casts schema_type to SchemaType enum', function () {
         'schema_type' => SchemaType::Article,
     ]);
 
-    expect($seoData->schema_type)->toBeInstanceOf(SchemaType::class)
-        ->and($seoData->schema_type)->toBe(SchemaType::Article);
+    expect($seoData->fresh()->schema_type)->toBe(SchemaType::Article);
 });
 
-it('casts schema_data to array', function () {
-    $seoData = new SeoData();
-    $seoData->schema_data = ['headline' => 'Test Headline'];
+it('stores schema_data as a JSON string per locale', function () {
+    $seoData = SeoData::create([
+        'seoable_type' => 'App\\Models\\Page',
+        'seoable_id' => 1,
+        'schema_data' => ['en' => '{"headline":"English"}', 'fr' => '{"headline":"Français"}'],
+    ])->fresh();
 
-    expect($seoData->schema_data)->toBeArray()
-        ->and($seoData->schema_data['headline'])->toBe('Test Headline');
-});
-
-it('casts faq_pairs to array', function () {
-    $seoData = new SeoData();
-    $seoData->faq_pairs = [
-        ['question' => 'Q1', 'answer' => 'A1'],
-    ];
-
-    expect($seoData->faq_pairs)->toBeArray()
-        ->and($seoData->faq_pairs[0]['question'])->toBe('Q1');
+    expect($seoData->schema_data)->toBe('{"headline":"English"}')
+        ->and($seoData->getTranslation('schema_data', 'fr'))->toBe('{"headline":"Français"}');
 });
 
 it('casts content_updated_at to datetime', function () {
@@ -55,82 +32,63 @@ it('casts content_updated_at to datetime', function () {
         'content_updated_at' => '2024-01-15 10:30:00',
     ]);
 
-    expect($seoData->content_updated_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+    expect($seoData->content_updated_at)->toBeInstanceOf(Carbon::class);
 });
 
-it('getOgTitle returns fallback to title', function () {
-    $seoData = new SeoData(['title' => 'Main Title']);
+it('getOgTitle falls back to the meta title', function () {
+    expect((new SeoData(['title' => 'Main Title']))->getOgTitle())->toBe('Main Title');
+});
 
-    expect($seoData->getOgTitle())->toBe('Main Title');
+it('getOgTitle prefers og_title when set', function () {
+    $seoData = new SeoData(['title' => 'Main Title', 'og_title' => 'OG Title']);
 
-    $seoData->open_graph = ['title' => 'OG Title'];
     expect($seoData->getOgTitle())->toBe('OG Title');
 });
 
-it('getOgDescription returns fallback to description', function () {
-    $seoData = new SeoData(['description' => 'Main Description']);
+it('getOgDescription falls back to the meta description', function () {
+    expect((new SeoData(['description' => 'Main Description']))->getOgDescription())->toBe('Main Description');
+});
 
-    expect($seoData->getOgDescription())->toBe('Main Description');
+it('getOgDescription prefers og_description when set', function () {
+    $seoData = new SeoData(['description' => 'Main Description', 'og_description' => 'OG Description']);
 
-    $seoData->open_graph = ['description' => 'OG Description'];
     expect($seoData->getOgDescription())->toBe('OG Description');
 });
 
-it('getTwitterTitle returns fallback to OG title', function () {
-    $seoData = new SeoData([
-        'title' => 'Main Title',
-        'open_graph' => ['title' => 'OG Title'],
-    ]);
+it('getTwitterTitle falls back to the OG title', function () {
+    $seoData = new SeoData(['title' => 'Main Title', 'og_title' => 'OG Title']);
 
     expect($seoData->getTwitterTitle())->toBe('OG Title');
+});
 
-    $seoData->twitter_card = ['title' => 'Twitter Title'];
+it('getTwitterTitle prefers twitter_title when set', function () {
+    $seoData = new SeoData(['og_title' => 'OG Title', 'twitter_title' => 'Twitter Title']);
+
     expect($seoData->getTwitterTitle())->toBe('Twitter Title');
 });
 
-it('getTwitterDescription returns fallback to OG description', function () {
-    $seoData = new SeoData([
-        'description' => 'Main Description',
-        'open_graph' => ['description' => 'OG Description'],
-    ]);
+it('getTwitterDescription falls back to the OG description', function () {
+    $seoData = new SeoData(['description' => 'Main Description', 'og_description' => 'OG Description']);
 
     expect($seoData->getTwitterDescription())->toBe('OG Description');
+});
 
-    $seoData->twitter_card = ['description' => 'Twitter Description'];
+it('getTwitterDescription prefers twitter_description when set', function () {
+    $seoData = new SeoData(['og_description' => 'OG Description', 'twitter_description' => 'Twitter Description']);
+
     expect($seoData->getTwitterDescription())->toBe('Twitter Description');
 });
 
 it('hasSchemaMarkup returns true when schema_type and schema_data exist', function () {
     $seoData = new SeoData([
         'schema_type' => SchemaType::Article,
-        'schema_data' => ['headline' => 'Test'],
+        'schema_data' => '{"headline":"Test"}',
     ]);
 
     expect($seoData->hasSchemaMarkup())->toBeTrue();
 });
 
 it('hasSchemaMarkup returns false when either is missing', function () {
-    $seoData = new SeoData(['schema_type' => SchemaType::Article]);
-    expect($seoData->hasSchemaMarkup())->toBeFalse();
-
-    $seoData = new SeoData(['schema_data' => ['headline' => 'Test']]);
-    expect($seoData->hasSchemaMarkup())->toBeFalse();
-});
-
-it('hasFaqPairs returns true when faq_pairs is not empty', function () {
-    $seoData = new SeoData([
-        'faq_pairs' => [
-            ['question' => 'Q1', 'answer' => 'A1'],
-        ],
-    ]);
-
-    expect($seoData->hasFaqPairs())->toBeTrue();
-});
-
-it('hasFaqPairs returns false when faq_pairs is empty', function () {
-    $seoData = new SeoData();
-    expect($seoData->hasFaqPairs())->toBeFalse();
-
-    $seoData->faq_pairs = [];
-    expect($seoData->hasFaqPairs())->toBeFalse();
+    expect((new SeoData(['schema_type' => SchemaType::Article]))->hasSchemaMarkup())->toBeFalse()
+        ->and((new SeoData(['schema_data' => '{"headline":"Test"}']))->hasSchemaMarkup())->toBeFalse();
 });
