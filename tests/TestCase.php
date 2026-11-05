@@ -30,8 +30,5 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app): void
     {
         config()->set('database.default', 'testing');
-
-        $migration = include __DIR__.'/../database/migrations/create_seo_data_table.php.stub';
-        $migration->up();
     }
 }
