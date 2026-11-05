@@ -2,8 +2,8 @@
 
 namespace BlackpigCreatif\Sceau\Models;
 
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
-use BlackpigCreatif\ChambreNoir\StateCasts\RetouchMediaUploadStateCast;
 use BlackpigCreatif\Sceau\Enums\SchemaType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -198,7 +198,7 @@ class SeoData extends Model
             ->first(function (AtelierBlock $block) {
                 $instance = $block->hydrateBlock();
 
-                return $instance instanceof \BlackpigCreatif\Atelier\Blocks\HeroBlock;
+                return $instance instanceof HeroBlock;
             });
 
         if (! $heroBlock) {

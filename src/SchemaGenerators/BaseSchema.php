@@ -3,6 +3,7 @@
 namespace BlackpigCreatif\Sceau\SchemaGenerators;
 
 use BlackpigCreatif\Sceau\Models\SeoData;
+use BlackpigCreatif\Sceau\Models\SeoSettings;
 
 abstract class BaseSchema
 {
@@ -67,7 +68,7 @@ abstract class BaseSchema
      */
     protected function getSettings()
     {
-        return \BlackpigCreatif\Sceau\Models\SeoSettings::first();
+        return SeoSettings::first();
     }
 
     /**

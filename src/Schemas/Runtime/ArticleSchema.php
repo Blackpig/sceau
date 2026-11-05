@@ -5,6 +5,7 @@ namespace BlackpigCreatif\Sceau\Schemas\Runtime;
 use BlackpigCreatif\Atelier\Contracts\HasCompositeSchema;
 use BlackpigCreatif\Sceau\Enums\SchemaType;
 use BlackpigCreatif\Sceau\Models\SeoData;
+use BlackpigCreatif\Sceau\Models\SeoSettings;
 use Illuminate\Support\Collection;
 
 class ArticleSchema
@@ -56,7 +57,7 @@ class ArticleSchema
 
         $schema = [
             '@context' => 'https://schema.org',
-            '@type'    => $type,
+            '@type' => $type,
         ];
 
         // Headline from SEO data or parent model
@@ -95,7 +96,7 @@ class ArticleSchema
         }
 
         // Publisher from settings
-        $settings = \BlackpigCreatif\Sceau\Models\SeoSettings::first();
+        $settings = SeoSettings::first();
         if ($settings?->site_name) {
             $schema['publisher'] = [
                 '@type' => 'Organization',

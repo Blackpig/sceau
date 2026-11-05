@@ -13,6 +13,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use LaraZeus\SpatieTranslatable\Resources\RelationManagers\Concerns\Translatable;
 
 class SeoDataRelationManager extends RelationManager
@@ -70,8 +71,8 @@ class SeoDataRelationManager extends RelationManager
                     ->icon(Heroicon::OutlinedPlus)
                     ->createAnother(false)
                     ->visible(fn (): bool => $this->getOwnerRecord()->seoData === null),
-                
-                    \LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher::make()
+
+                LocaleSwitcher::make(),
             ])
             ->actions([
                 EditAction::make(),

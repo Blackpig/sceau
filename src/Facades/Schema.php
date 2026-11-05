@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Sceau\Facades;
 
+use BlackpigCreatif\Sceau\Services\SchemaStack;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -11,12 +12,12 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool isEmpty()
  * @method static int count()
  *
- * @see \BlackpigCreatif\Sceau\Services\SchemaStack
+ * @see SchemaStack
  */
 class Schema extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \BlackpigCreatif\Sceau\Services\SchemaStack::class;
+        return SchemaStack::class;
     }
 }

@@ -31,36 +31,36 @@ class HowToSchema extends BaseSchema
     public function getSkeleton(): array
     {
         return [
-            '@context'    => 'https://schema.org',
-            '@type'       => 'HowTo',
-            'name'        => '',
+            '@context' => 'https://schema.org',
+            '@type' => 'HowTo',
+            'name' => '',
             'description' => '',
-            'image'       => '',
-            'totalTime'   => '',  // ISO 8601 duration, e.g. PT30M
+            'image' => '',
+            'totalTime' => '',  // ISO 8601 duration, e.g. PT30M
             'estimatedCost' => [
-                '@type'    => 'MonetaryAmount',
+                '@type' => 'MonetaryAmount',
                 'currency' => '',
-                'value'    => '',
+                'value' => '',
             ],
             'supply' => [
                 [
                     '@type' => 'HowToSupply',
-                    'name'  => '',
+                    'name' => '',
                 ],
             ],
             'tool' => [
                 [
                     '@type' => 'HowToTool',
-                    'name'  => '',
+                    'name' => '',
                 ],
             ],
             'step' => [
                 [
-                    '@type'    => 'HowToStep',
-                    'name'     => '',
-                    'text'     => '',
-                    'image'    => '',
-                    'url'      => '',
+                    '@type' => 'HowToStep',
+                    'name' => '',
+                    'text' => '',
+                    'image' => '',
+                    'url' => '',
                 ],
             ],
         ];
